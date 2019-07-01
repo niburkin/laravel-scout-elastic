@@ -15,7 +15,7 @@ class ElasticsearchEngine extends Engine
      * @var string
      */
     protected $index;
-    
+
     /**
      * Elastic where the instance of Elastic|\Elasticsearch\Client is stored.
      *
@@ -26,7 +26,7 @@ class ElasticsearchEngine extends Engine
     /**
      * Create a new engine instance.
      *
-     * @param  \Elasticsearch\Client  $elastic
+     * @param  \Elasticsearch\Client $elastic
      * @return void
      */
     public function __construct(Elastic $elastic, $index)
@@ -38,19 +38,18 @@ class ElasticsearchEngine extends Engine
     /**
      * Update the given model in the index.
      *
-     * @param  Collection  $models
+     * @param  Collection $models
      * @return void
      */
     public function update($models)
     {
         $params['body'] = [];
 
-        $models->each(function($model) use (&$params)
-        {
+        $models->each(function ($model) use (&$params) {
             $params['body'][] = [
                 'update' => [
                     '_id' => $model->getKey(),
-                    '_index' => $this->index,
+                    '_index' => "{$this->index}_{$model->searchableAs()}",
                     '_type' => $model->searchableAs(),
                 ]
             ];
@@ -66,19 +65,18 @@ class ElasticsearchEngine extends Engine
     /**
      * Remove the given model from the index.
      *
-     * @param  Collection  $models
+     * @param  Collection $models
      * @return void
      */
     public function delete($models)
     {
         $params['body'] = [];
 
-        $models->each(function($model) use (&$params)
-        {
+        $models->each(function ($model) use (&$params) {
             $params['body'][] = [
                 'delete' => [
                     '_id' => $model->getKey(),
-                    '_index' => $this->index,
+                    '_index' => "{$this->index}_{$model->searchableAs()}",
                     '_type' => $model->searchableAs(),
                 ]
             ];
@@ -90,7 +88,7 @@ class ElasticsearchEngine extends Engine
     /**
      * Perform the given search on the engine.
      *
-     * @param  Builder  $builder
+     * @param  Builder $builder
      * @return mixed
      */
     public function search(Builder $builder)
@@ -104,9 +102,9 @@ class ElasticsearchEngine extends Engine
     /**
      * Perform the given search on the engine.
      *
-     * @param  Builder  $builder
-     * @param  int  $perPage
-     * @param  int  $page
+     * @param  Builder $builder
+     * @param  int $perPage
+     * @param  int $page
      * @return mixed
      */
     public function paginate(Builder $builder, $perPage, $page)
@@ -117,7 +115,7 @@ class ElasticsearchEngine extends Engine
             'size' => $perPage,
         ]);
 
-       $result['nbPages'] = $result['hits']['total']/$perPage;
+        $result['nbPages'] = $result['hits']['total'] / $perPage;
 
         return $result;
     }
@@ -125,19 +123,19 @@ class ElasticsearchEngine extends Engine
     /**
      * Perform the given search on the engine.
      *
-     * @param  Builder  $builder
-     * @param  array  $options
+     * @param  Builder $builder
+     * @param  array $options
      * @return mixed
      */
     protected function performSearch(Builder $builder, array $options = [])
     {
         $params = [
-            'index' => $this->index,
+            'index' => "{$this->index}_{$builder->model->searchableAs()}",
             'type' => $builder->index ?: $builder->model->searchableAs(),
             'body' => [
                 'query' => [
                     'bool' => [
-                        'must' => [['query_string' => [ 'query' => "*{$builder->query}*"]]]
+                        'must' => [['query_string' => ['query' => "*{$builder->query}*"]]]
                     ]
                 ]
             ]
@@ -175,7 +173,7 @@ class ElasticsearchEngine extends Engine
     /**
      * Get the filter array for the query.
      *
-     * @param  Builder  $builder
+     * @param  Builder $builder
      * @return array
      */
     protected function filters(Builder $builder)
@@ -192,7 +190,7 @@ class ElasticsearchEngine extends Engine
     /**
      * Pluck and return the primary keys of the given results.
      *
-     * @param  mixed  $results
+     * @param  mixed $results
      * @return \Illuminate\Support\Collection
      */
     public function mapIds($results)
@@ -203,9 +201,9 @@ class ElasticsearchEngine extends Engine
     /**
      * Map the given results to instances of the given model.
      *
-     * @param  \Laravel\Scout\Builder  $builder
-     * @param  mixed  $results
-     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  \Laravel\Scout\Builder $builder
+     * @param  mixed $results
+     * @param  \Illuminate\Database\Eloquent\Model $model
      * @return Collection
      */
     public function map(Builder $builder, $results, $model)
@@ -217,16 +215,16 @@ class ElasticsearchEngine extends Engine
         $keys = collect($results['hits']['hits'])->pluck('_id')->values()->all();
 
         return $model->getScoutModelsByIds(
-                $builder, $keys
-            )->filter(function ($model) use ($keys) {
-                return in_array($model->getScoutKey(), $keys);
-            });
+            $builder, $keys
+        )->filter(function ($model) use ($keys) {
+            return in_array($model->getScoutKey(), $keys);
+        });
     }
 
     /**
      * Get the total count from a raw result returned by the engine.
      *
-     * @param  mixed  $results
+     * @param  mixed $results
      * @return int
      */
     public function getTotalCount($results)
@@ -237,7 +235,7 @@ class ElasticsearchEngine extends Engine
     /**
      * Flush all of the model's records from the engine.
      *
-     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  \Illuminate\Database\Eloquent\Model $model
      * @return void
      */
     public function flush($model)
@@ -259,7 +257,7 @@ class ElasticsearchEngine extends Engine
             return null;
         }
 
-        return collect($builder->orders)->map(function($order) {
+        return collect($builder->orders)->map(function ($order) {
             return [$order['column'] => $order['direction']];
         })->toArray();
     }
