@@ -158,17 +158,18 @@ class ElasticsearchEngine extends Engine
             $params['body']['query']['bool']['must'] = array_merge($params['body']['query']['bool']['must'],
                 $options['numericFilters']);
         }
-
-        if ($builder->callback) {
-            return call_user_func(
-                $builder->callback,
-                $this->elastic,
-                $builder->query,
-                $params
-            );
-        }
-
         try {
+
+
+            if ($builder->callback) {
+                return call_user_func(
+                    $builder->callback,
+                    $this->elastic,
+                    $builder->query,
+                    $params
+                );
+            }
+
             return $this->elastic->search($params);
         } catch (Missing404Exception $exception) {
             return [
