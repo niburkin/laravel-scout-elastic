@@ -6,6 +6,7 @@ use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
 use Elasticsearch\Client as Elastic;
 use Illuminate\Database\Eloquent\Collection;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 
 class ElasticsearchEngine extends Engine
 {
@@ -167,7 +168,25 @@ class ElasticsearchEngine extends Engine
             );
         }
 
-        return $this->elastic->search($params);
+        try {
+            return $this->elastic->search($params);
+        } catch (Missing404Exception $exception) {
+            return [
+                "took" => 0,
+                "timed_out" => false,
+                "_shards" => [
+                    "total" => 1,
+                    "successful" => 1,
+                    "skipped" => 0,
+                    "failed" => 0,
+                ],
+                "hits" => [
+                    "total" => 0,
+                    "max_score" => 1,
+                    "hits" => []
+                ]
+            ];
+        }
     }
 
     /**
