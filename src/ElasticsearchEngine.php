@@ -147,7 +147,7 @@ class ElasticsearchEngine extends Engine
             'body' => [
                 'query' => [
                     'bool' => [
-                        'must' => [['query_string' => ['query' => "*{$builder->query}*"]]]
+                        'must' => [['query_string' => ['query' => "*{$query}*"]]]
                     ]
                 ]
             ]
@@ -176,7 +176,7 @@ class ElasticsearchEngine extends Engine
                 return call_user_func(
                     $builder->callback,
                     $this->elastic,
-                    $builder->query,
+                    $query,
                     $params
                 );
             }
