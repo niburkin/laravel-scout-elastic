@@ -130,8 +130,19 @@ class ElasticsearchEngine extends Engine
      */
     protected function performSearch(Builder $builder, array $options = [])
     {
+        $index = "{$this->index}_{$builder->model->searchableAs()}";
+
+        $regex = config('scout.elasticsearch.regex') ?? [];
+        $query = $builder->query;
+
+        if (isset($regex[$index])) {
+            $query = preg_replace($regex[$index]["pattern"], $regex[$index]["replace"], $query);
+        } else if (isset($regex["_all"])) {
+            $query = preg_replace($regex["_all"]["pattern"], $regex["_all"]["replace"], $query);
+        }
+
         $params = [
-            'index' => "{$this->index}_{$builder->model->searchableAs()}",
+            'index' => $index,
             'type' => $builder->index ?: $builder->model->searchableAs(),
             'body' => [
                 'query' => [
