@@ -61,7 +61,20 @@ class ElasticsearchEngine extends Engine
             ];
         });
 
-        $this->elastic->bulk($params);
+        $this->parseResult(
+            $this->elastic->bulk($params)
+        );
+    }
+
+    /**
+     * @param null $result
+     * @throws \Exception
+     */
+    private function parseResult($result = null)
+    {
+        if ($result && isset($result["errors"]) && $result["errors"]) {
+            throw new \Exception(json_encode($result, JSON_UNESCAPED_UNICODE), 400);
+        }
     }
 
     /**
@@ -84,7 +97,9 @@ class ElasticsearchEngine extends Engine
             ];
         });
 
-        $this->elastic->bulk($params);
+        $this->parseResult(
+            $this->elastic->bulk($params)
+        );
     }
 
     /**
